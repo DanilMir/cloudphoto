@@ -5,6 +5,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"os"
+	"strings"
 )
 
 func IsBucketExist() bool {
@@ -69,4 +71,52 @@ func GetAllRootFolders() ([]string, error) {
 		result = append(result, s[:len(s)-1])
 	}
 	return result, nil
+}
+
+func CreateFolderIfNotExists(folderName string) {
+	folderName = folderName + "/"
+	input := &s3.HeadObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(folderName),
+	}
+	_, err := client.HeadObject(context.TODO(), input)
+	if err != nil {
+		_, err = client.PutObject(context.TODO(), &s3.PutObjectInput{
+			Bucket: &bucket,
+			Key:    &folderName,
+		})
+	}
+}
+
+func UploadImagesToAlbum(folderName string, imagePaths []string) {
+	for _, filename := range imagePaths {
+		uploadFile(client, bucket, filename, folderName)
+	}
+}
+
+func uploadFile(client *s3.Client, bucket string, filename string, fileAlbum string) {
+	file, err := os.Open(filename)
+	if err != nil {
+		println("Warning: Photo not sent", filename)
+		return
+	}
+	defer file.Close()
+
+	// Извлекаем имя файла из пути
+	key := filename
+	if idx := strings.LastIndex(key, "/"); idx != -1 {
+		key = key[idx+1:]
+	}
+
+	key = fileAlbum + "/" + key
+
+	_, err = client.PutObject(context.TODO(), &s3.PutObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+		Body:   file,
+	})
+	if err != nil {
+		println("Warning: Photo not sent", filename)
+		return
+	}
 }
