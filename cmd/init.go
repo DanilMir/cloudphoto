@@ -28,13 +28,14 @@ var initCmd = &cobra.Command{
 
 		yandex_cloud.LoadFromConfigFile()
 		yandex_cloud.Init()
-		if !yandex_cloud.IsBucketExist(bucket) {
-			err = yandex_cloud.CreateBucket(bucket)
+		if !yandex_cloud.IsBucketExist() {
+			err = yandex_cloud.CreateBucket()
 			if err != nil {
 				println("Error:", err)
 				os.Exit(1)
 			}
 		}
+		os.Exit(0)
 	},
 }
 

@@ -2,6 +2,7 @@ package yandex_cloud
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -12,6 +13,9 @@ import (
 
 	"gopkg.in/ini.v1"
 )
+
+type YC struct {
+}
 
 var (
 	bucket             string
@@ -27,13 +31,18 @@ func isEmpty(str string) bool {
 }
 
 func getConfLocation() string {
+	location := getConfFolder() + "config.ini"
+	return location
+}
+
+func getConfFolder() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		println(err)
 		os.Exit(1)
 	}
 
-	location := home + "/.config/cloudphoto/cloudphotorc/config.ini"
+	location := home + "/.config/cloudphoto/cloudphotorc/"
 	return location
 }
 
@@ -56,6 +65,13 @@ func LoadFromConfigFile() {
 	}
 }
 
+func isFileExist(path string) bool {
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return false
+	}
+	return true
+}
+
 func CreateConfigFile(bucketName, keyId, accessKey string) error {
 	cfg := ini.Empty()
 	cfg.Section("DEFAULT").Key("bucket").SetValue(bucketName)
@@ -64,10 +80,14 @@ func CreateConfigFile(bucketName, keyId, accessKey string) error {
 	cfg.Section("DEFAULT").Key("region").SetValue("ru-central1")
 	cfg.Section("DEFAULT").Key("endpoint_url").SetValue("https://storage.yandexcloud.net")
 
-	err := os.Remove(getConfLocation())
-	if err != nil {
-		return err
+	if isFileExist(getConfLocation()) {
+		err := os.Remove(getConfLocation())
+		if err != nil {
+			return err
+		}
 	}
+
+	err := os.MkdirAll(getConfFolder(), os.ModePerm)
 
 	err = cfg.SaveTo(getConfLocation())
 	if err != nil {

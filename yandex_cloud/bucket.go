@@ -7,9 +7,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
-func IsBucketExist(bucketName string) bool {
+func IsBucketExist() bool {
 	input := &s3.HeadBucketInput{
-		Bucket: &bucketName,
+		Bucket: &bucket,
 	}
 
 	_, err := client.HeadBucket(context.TODO(), input)
@@ -20,10 +20,11 @@ func IsBucketExist(bucketName string) bool {
 	}
 }
 
-func CreateBucket(bucketName string) error {
+func CreateBucket() error {
 	_, err := client.CreateBucket(context.TODO(), &s3.CreateBucketInput{
-		Bucket: aws.String(bucketName),
+		Bucket: aws.String(bucket),
 		ACL:    types.BucketCannedACLPublicRead,
+		//todo: set acl public in mksit funcion
 		CreateBucketConfiguration: &types.CreateBucketConfiguration{
 			LocationConstraint: types.BucketLocationConstraint(region),
 		},
@@ -44,4 +45,28 @@ func CreateBucket(bucketName string) error {
 	//	return err
 	//}
 	return nil
+}
+
+func GetAllRootFolders() ([]string, error) {
+	input := &s3.ListObjectsV2Input{
+		Bucket:    aws.String(bucket),
+		Prefix:    aws.String(""),
+		Delimiter: aws.String("/"),
+	}
+
+	// Вызываем операцию ListObjectsV2 для получения списка объектов и папок
+	resp, err := client.ListObjectsV2(context.TODO(), input)
+	if err != nil {
+		return nil, err
+	}
+
+	folders := resp.CommonPrefixes
+
+	var result []string
+
+	for _, folder := range folders {
+		s := *folder.Prefix
+		result = append(result, s[:len(s)-1])
+	}
+	return result, nil
 }
