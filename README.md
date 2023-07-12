@@ -17,3 +17,8 @@ go build
 ```
 ./cloudphoto [COMMAND] ...
 ```
+
+## Пример команд
+```
+./cloudphoto --help
+```
