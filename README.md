@@ -1,7 +1,7 @@
 # cloudphoto
 ## Летняя практика
 
-## Установка (Linux)
+## Установка (Ubuntu 22.04)
 
 ```
 sudo apt update
